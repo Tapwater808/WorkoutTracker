@@ -1,39 +1,50 @@
 const db = require("../models");
 
-module.exports = function(app) {
-    // pull up info for the workouts page
-    app.get("/api/workouts", (req, res) => {
-        db.Workout.find({}).then(dbWorkout => {
-            res.json(dbWorkout);
-        })
+require("mongoose");
+
+module.exports = (app) => {
+
+
+    // Workout Creation
+    app.post("/api/workouts", (req, res) => {
+        db.Workout.create({}).then(data => res.json(data))
         .catch(err => {
-            res.status(400).json(err);
-        });
-    })
-    // pull up info for the range page
-    app.get("/api/workouts/range", ({}, res) => {
-      db.Workout.find({}).then((dbWorkout) => {
-        res.json(dbWorkout);
-      }).catch(err => {
-        res.status(400).json(err);
-      });
-    });
-    // submit new completed workouts
-    app.post("/api/workouts/", (req, res) => {
-        db.Workout.create(req.body).then((dbWorkout) => {
-          res.json(dbWorkout);
-        }).catch(err => {
-            res.status(400).json(err);
+            console.log("error", err);
+            res.json(err);
+
           });
-      });
-      // update workouts by MongoDB _id value and update
-      app.put("/api/workouts/:id", (req, res) => {
-        db.Workout.findByIdAndUpdate(
-          { _id: req.params.id }, { exercises: req.body }
-        ).then((dbWorkout) => {
-          res.json(dbWorkout);
-        }).catch(err => {
-          res.status(400).json(err);
-        });
+    });
+    // Exercise
+    app.put("/api/workouts/:id", (req, res) => {
+
+        db.Workout.findByIdAndUpdate(req.params.id,
+            {$push: {exercises: req.body}},
+            {new: true, runValidators: true})
+          
+        .then(data => res.json(data))
+        .catch(err => {
+            console.log("error", err);
+            res.json(err);
+          });
+    });
+    // Workout Ranges
+    app.get("/api/workouts/range", (req, res) => {
+        db.Workout.find({}).limit(7).then(data => res.json(data))
+        .catch(err => {
+            console.log("error", err);
+            res.json(err);
+          });
+    });   
+    // get most recent Workout
+    app.get("/api/workouts", (req, res) => {
+        db.Workout.find({}).then(data => res.json(data))
+        .catch(err => {
+            console.log("error", err);
+            res.json(err);
+          });
+    });  
+    // catchall on the "/"
+    app.get("*", (req, res) => {
+        res.redirect("/");
     });
 };
